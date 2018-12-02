@@ -1,8 +1,16 @@
 package com.example.ajay.cs125_final_app;
 
+import java.util.List;
+import java.util.ArrayList;
+import com.example.lib.ItemList;
+
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
+import android.text.InputType;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -12,9 +20,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private List<ItemList> itemLists;
+    private ItemList currentList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +52,54 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        itemLists = new ArrayList();
+        if (itemLists.size() > 0) {
+            currentList = itemLists.get(0);
+        }
+
+        this.updateListsMenu();
+    }
+
+    private void updateListsMenu() {
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        Menu listsMenu = navigationView.getMenu();
+        listsMenu.removeGroup(R.id.lists_menu_group);
+
+        for (int i = 0; i < itemLists.size(); i++) {
+            listsMenu.add(R.id.lists_menu_group, i, 0, itemLists.get(i).getName());
+        }
+    }
+
+    private void updateCurrentList() {
+        setTitle(currentList.getName());
+    }
+
+    private void addList() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add List...");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String listName = input.getText().toString();
+                itemLists.add(new ItemList(listName));
+                updateListsMenu();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
     }
 
     @Override
@@ -67,8 +127,14 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        if (id == R.id.delete_list) {
+            itemLists.remove(currentList);
+            if (itemLists.size() > 0) {
+                currentList = itemLists.get(0);
+            }
+
+            updateCurrentList();
+            updateListsMenu();
         }
 
         return super.onOptionsItemSelected(item);
@@ -80,18 +146,11 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        if (id == R.id.add_item) {
+            addList();
+        } else {
+            currentList = itemLists.get(id);
+            updateCurrentList();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

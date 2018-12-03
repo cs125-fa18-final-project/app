@@ -5,19 +5,15 @@ import java.util.ArrayList;
 import com.example.lib.ItemList;
 import com.example.lib.Item;
 
+import android.content.Intent;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.view.PointerIconCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
-import android.text.Layout;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.PointerIcon;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -29,7 +25,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -160,6 +155,15 @@ public class MainActivity extends AppCompatActivity
         tr.addView(itemCheckBox);
         tr.addView(itemTextView);
         tr.addView(itemDeleteButton);
+
+        final MainActivity delegate = this;
+        tr.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent editItemIntent = new Intent(delegate, ItemActivity.class);
+                startActivity(editItemIntent);
+            }
+        });
 
         return tr;
     }

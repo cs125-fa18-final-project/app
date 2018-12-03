@@ -6,13 +6,18 @@ import com.example.lib.ItemList;
 import com.example.lib.Item;
 
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.view.PointerIconCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
+import android.text.Layout;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.PointerIcon;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -22,16 +27,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private List<ItemList> itemLists;
     private ItemList currentList;
+    private boolean isCurrentlyEditing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +71,8 @@ public class MainActivity extends AppCompatActivity
             currentList = itemLists.get(0);
         }
 
+        isCurrentlyEditing = false;
+
         updateListsMenu();
         updateCurrentList();
     }
@@ -71,9 +82,86 @@ public class MainActivity extends AppCompatActivity
         Menu listsMenu = navigationView.getMenu();
         listsMenu.removeGroup(R.id.lists_menu_group);
 
-        for (int i = 0; i < itemLists.size(); i++) {
-            listsMenu.add(R.id.lists_menu_group, i, 0, itemLists.get(i).getName());
+        for (ItemList list : itemLists) {
+            listsMenu.add(R.id.lists_menu_group, list.getID(), 0, list.getName());
         }
+    }
+
+    private TableRow generateTableRowForItem(final Item item) {
+        final int completedColor = Color.argb(150, 150, 200, 150);
+        final int notCompletedColor = Color.TRANSPARENT;
+        final int deleteButtonColor = Color.argb(255, 200, 20, 20);
+
+        final TableRow tr = new TableRow(this);
+
+        final TextView itemTextView = new TextView(this);
+        TableRow.LayoutParams tvlp = new TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.WRAP_CONTENT
+        );
+        tvlp.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
+        tvlp.column = 1;
+        itemTextView.setGravity(Gravity.LEFT);
+        itemTextView.setId(item.getID());
+        itemTextView.setText(item.getName());
+        itemTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
+        itemTextView.setLayoutParams(tvlp);
+
+        CheckBox itemCheckBox = new CheckBox(this);
+        TableRow.LayoutParams cblp = new TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.WRAP_CONTENT
+        );
+        cblp.gravity = Gravity.CENTER_VERTICAL;
+        cblp.column = 1;
+        itemCheckBox.setId(item.getID());
+        itemCheckBox.setGravity(Gravity.CENTER_VERTICAL);
+        itemCheckBox.setPadding(0, 80, 0, 0);
+        itemCheckBox.setChecked(item.isCompleted());
+        itemCheckBox.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                item.setCompleted(!item.isCompleted());
+                tr.setBackgroundColor(item.isCompleted() ? completedColor : notCompletedColor);
+            }
+        });
+
+        Button itemDeleteButton = new Button(this);
+        TableRow.LayoutParams idbLayoutParams = new TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,
+                TableRow.LayoutParams.WRAP_CONTENT
+        );
+        idbLayoutParams.gravity = Gravity.RIGHT;
+        idbLayoutParams.column = 2;
+        itemDeleteButton.setText("-");
+        itemDeleteButton.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
+        itemDeleteButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30f);
+        itemDeleteButton.setLayoutParams(idbLayoutParams);
+        itemDeleteButton.setBackgroundColor(Color.TRANSPARENT);
+        itemDeleteButton.setTextColor(deleteButtonColor);
+        itemDeleteButton.setId(item.getID());
+        itemDeleteButton.setVisibility(isCurrentlyEditing ? View.VISIBLE : View.INVISIBLE);
+        itemDeleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                currentList.removeItem(item);
+                updateCurrentList();
+            }
+        });
+
+        tr.setBackgroundColor(item.isCompleted() ? completedColor : notCompletedColor);
+        tr.setPadding(20, 10, 20, 10);
+        TableRow.LayoutParams trlp = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT,
+                TableRow.LayoutParams.WRAP_CONTENT
+        );
+        tr.setLayoutParams(trlp);
+
+        tr.addView(itemCheckBox);
+        tr.addView(itemTextView);
+        tr.addView(itemDeleteButton);
+
+        return tr;
     }
 
     private void updateCurrentList() {
@@ -88,20 +176,16 @@ public class MainActivity extends AppCompatActivity
         setTitle(currentList.getName());
 
         for (Item item : currentList.getItems()) {
-            TextView itemTextView = new TextView(this);
-            itemTextView.setText(item.getName());
-            itemTextView.setPadding(20, 50, 20, 50);
-            itemTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
-
-            TableRow tr = new TableRow(this);
-            tr.addView(itemTextView);
-            tr.setLayoutParams(new TableLayout.LayoutParams(
-                    TableLayout.LayoutParams.MATCH_PARENT,
-                    TableLayout.LayoutParams.WRAP_CONTENT
-            ));
-
-            itemTableLayout.addView(tr);
+            itemTableLayout.addView(generateTableRowForItem(item));
         }
+    }
+
+    private ItemList getListWithID(int id) {
+        for (ItemList list : itemLists) {
+            if (list.getID() == id) return list;
+        }
+
+        return null;
     }
 
     private void addList() {
@@ -199,6 +283,18 @@ public class MainActivity extends AppCompatActivity
             updateListsMenu();
         }
 
+        if (id == R.id.edit_list) {
+            isCurrentlyEditing = !isCurrentlyEditing;
+
+            if (isCurrentlyEditing) {
+                item.setTitle("Finish Editing List");
+            } else {
+                item.setTitle("Edit List...");
+            }
+
+            updateCurrentList();
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -211,7 +307,7 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.add_item) {
             addList();
         } else {
-            currentList = itemLists.get(id);
+            currentList = getListWithID(id);
             updateCurrentList();
         }
 

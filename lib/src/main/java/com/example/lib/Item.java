@@ -3,16 +3,12 @@ package com.example.lib;
 import java.util.Date;
 
 public class Item {
-    private static int globalID = 0;
-
     private Date date;
     private String name;
     private boolean completed;
-    private int id;
 
     public Item(String setName) {
         name = setName;
-        id = globalID++;
         completed = false;
     }
 
@@ -38,9 +34,5 @@ public class Item {
 
     public void setCompleted(boolean completed) {
         this.completed = completed;
-    }
-
-    public int getID() {
-        return id;
     }
 }

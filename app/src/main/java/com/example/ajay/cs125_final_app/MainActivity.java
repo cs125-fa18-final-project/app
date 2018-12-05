@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity
         listsMenu.removeGroup(R.id.lists_menu_group);
 
         for (ItemList list : itemLists) {
-            listsMenu.add(R.id.lists_menu_group, list.getID(), 0, list.getName());
+            listsMenu.add(R.id.lists_menu_group, list.hashCode(), 0, list.getName());
         }
     }
 
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity
         tvlp.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
         tvlp.column = 1;
         itemTextView.setGravity(Gravity.LEFT);
-        itemTextView.setId(item.getID());
+        itemTextView.setId(item.hashCode());
         itemTextView.setText(item.getName());
         itemTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
         itemTextView.setLayoutParams(tvlp);
@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity
         );
         cblp.gravity = Gravity.CENTER_VERTICAL;
         cblp.column = 1;
-        itemCheckBox.setId(item.getID());
+        itemCheckBox.setId(item.hashCode());
         itemCheckBox.setGravity(Gravity.CENTER_VERTICAL);
         itemCheckBox.setPadding(0, 80, 0, 0);
         itemCheckBox.setChecked(item.isCompleted());
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity
         itemDeleteButton.setLayoutParams(idbLayoutParams);
         itemDeleteButton.setBackgroundColor(Color.TRANSPARENT);
         itemDeleteButton.setTextColor(deleteButtonColor);
-        itemDeleteButton.setId(item.getID());
+        itemDeleteButton.setId(item.hashCode());
         itemDeleteButton.setVisibility(isCurrentlyEditing ? View.VISIBLE : View.INVISIBLE);
         itemDeleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity
 
     private ItemList getListWithID(int id) {
         for (ItemList list : itemLists) {
-            if (list.getID() == id) return list;
+            if (list.hashCode() == id) return list;
         }
 
         return null;

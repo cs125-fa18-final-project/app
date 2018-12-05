@@ -88,18 +88,18 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/calendar_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Check Calendar" />
+            android:text="Add to Calendar" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/location_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Location Alert" />
+            android:text="Set Location" />
     </LinearLayout>
 
 </LinearLayout>

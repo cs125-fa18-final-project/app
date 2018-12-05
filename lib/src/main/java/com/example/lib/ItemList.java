@@ -2,6 +2,7 @@ package com.example.lib;
 
 import java.util.List;
 import java.util.ArrayList;
+import com.google.gson.Gson;
 
 public class ItemList {
     private static int globalID = 0;
@@ -10,10 +11,18 @@ public class ItemList {
     private List<Item> items;
     private int id;
 
+    public static ItemList itemListFromJSON(String json) {
+        return new Gson().fromJson(json, ItemList.class);
+    }
+
     public ItemList(String setName) {
         name = setName;
         items = new ArrayList();
         id = globalID++;
+    }
+
+    public String toJSON() {
+        return new Gson().toJson(this);
     }
 
     public String getName() {

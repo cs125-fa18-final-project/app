@@ -1,8 +1,11 @@
 package com.example.lib;
 
+import java.util.Date;
+
 public class Item {
     private static int globalID = 0;
 
+    private Date date;
     private String name;
     private boolean completed;
     private int id;
@@ -11,6 +14,14 @@ public class Item {
         name = setName;
         id = globalID++;
         completed = false;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
     }
 
     public String getName() {

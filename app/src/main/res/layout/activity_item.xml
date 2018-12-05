@@ -78,7 +78,7 @@
             android:layout_weight="1"
             android:ems="10"
             android:inputType="textPersonName"
-            android:text="Item Location" />
+            android:hint="Latitude, Longitude" />
     </LinearLayout>
 
 </LinearLayout>

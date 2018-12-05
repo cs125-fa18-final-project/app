@@ -1,17 +1,10 @@
 package com.example.ajay.cs125_final_app;
 
-import java.util.List;
-import java.util.ArrayList;
 import com.example.lib.ItemList;
 import com.example.lib.Item;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -38,9 +31,6 @@ import android.widget.Button;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private final String SHARED_PREFERENCES_KEY = "lists";
-
-    private List<ItemList> itemLists;
     private ItemList currentList;
     private boolean isCurrentlyEditing;
 
@@ -48,10 +38,10 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -59,19 +49,18 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        itemLists = new ArrayList();
-        loadLists();
-        if (itemLists.size() > 0) {
-            currentList = itemLists.get(0);
+        ListManager.loadLists(this, getApplicationContext());
+        if (ListManager.getLists().size() > 0) {
+            currentList = ListManager.getLists().get(0);
         }
 
         isCurrentlyEditing = false;
@@ -80,30 +69,12 @@ public class MainActivity extends AppCompatActivity
         updateCurrentList();
     }
 
-    private void saveLists() {
-        SharedPreferences prefs = this.getSharedPreferences(this.getPackageName(), Context.MODE_PRIVATE);
-        String json = new Gson().toJson(itemLists);
-        prefs.edit().putString(SHARED_PREFERENCES_KEY, json).apply();
-    }
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-    private void loadLists() {
-        SharedPreferences prefs = this.getSharedPreferences(this.getPackageName(), Context.MODE_PRIVATE);
-        String json = prefs.getString(SHARED_PREFERENCES_KEY, new Gson().toJson(new ArrayList()));
-        Gson gson = new Gson();
-        JsonParser parser = new JsonParser();
-        JsonArray array = parser.parse(json).getAsJsonArray();
-
-        for (int i = 0; i < array.size(); i++) {
-            itemLists.add(gson.fromJson(array.get(i), ItemList.class));
-        }
-    }
-
-    public ItemList getListWithID(int id) {
-        for (ItemList list : itemLists) {
-            if (list.hashCode() == id) return list;
-        }
-
-        return null;
+        updateListsMenu();
+        updateCurrentList();
     }
 
     private void updateListsMenu() {
@@ -111,8 +82,8 @@ public class MainActivity extends AppCompatActivity
         Menu listsMenu = navigationView.getMenu();
         listsMenu.removeGroup(R.id.lists_menu_group);
 
-        for (ItemList list : itemLists) {
-            listsMenu.add(R.id.lists_menu_group, list.hashCode(), 0, list.getName());
+        for (ItemList list : ListManager.getLists()) {
+            listsMenu.add(R.id.lists_menu_group, list.getID(), 0, list.getName());
         }
     }
 
@@ -122,6 +93,7 @@ public class MainActivity extends AppCompatActivity
         final int deleteButtonColor = Color.argb(255, 200, 20, 20);
 
         final TableRow tr = new TableRow(this);
+        final MainActivity delegate = this;
 
         final TextView itemTextView = new TextView(this);
         TableRow.LayoutParams tvlp = new TableRow.LayoutParams(
@@ -131,7 +103,7 @@ public class MainActivity extends AppCompatActivity
         tvlp.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
         tvlp.column = 1;
         itemTextView.setGravity(Gravity.LEFT);
-        itemTextView.setId(item.hashCode());
+        itemTextView.setId(item.getID());
         itemTextView.setText(item.getName());
         itemTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
         itemTextView.setLayoutParams(tvlp);
@@ -143,7 +115,7 @@ public class MainActivity extends AppCompatActivity
         );
         cblp.gravity = Gravity.CENTER_VERTICAL;
         cblp.column = 1;
-        itemCheckBox.setId(item.hashCode());
+        itemCheckBox.setId(item.getID());
         itemCheckBox.setGravity(Gravity.CENTER_VERTICAL);
         itemCheckBox.setPadding(0, 80, 0, 0);
         itemCheckBox.setChecked(item.isCompleted());
@@ -152,7 +124,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v) {
                 item.setCompleted(!item.isCompleted());
                 tr.setBackgroundColor(item.isCompleted() ? completedColor : notCompletedColor);
-                saveLists();
+                ListManager.saveLists(delegate, getApplicationContext());
             }
         });
 
@@ -169,14 +141,13 @@ public class MainActivity extends AppCompatActivity
         itemDeleteButton.setLayoutParams(idbLayoutParams);
         itemDeleteButton.setBackgroundColor(Color.TRANSPARENT);
         itemDeleteButton.setTextColor(deleteButtonColor);
-        itemDeleteButton.setId(item.hashCode());
+        itemDeleteButton.setId(item.getID());
         itemDeleteButton.setVisibility(isCurrentlyEditing ? View.VISIBLE : View.INVISIBLE);
         itemDeleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentList.removeItem(item);
+                ListManager.removeItem(delegate, getApplicationContext(), currentList, item);
                 updateCurrentList();
-                saveLists();
             }
         });
 
@@ -192,12 +163,11 @@ public class MainActivity extends AppCompatActivity
         tr.addView(itemTextView);
         tr.addView(itemDeleteButton);
 
-        final MainActivity delegate = this;
         tr.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent editItemIntent = new Intent(delegate, ItemActivity.class);
-                editItemIntent.putExtra("id", item.hashCode());
+                editItemIntent.putExtra("id", item.getID());
                 startActivity(editItemIntent);
             }
         });
@@ -225,6 +195,8 @@ public class MainActivity extends AppCompatActivity
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add List...");
 
+        final MainActivity delegate = this;
+
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
@@ -234,10 +206,9 @@ public class MainActivity extends AppCompatActivity
             public void onClick(DialogInterface dialog, int which) {
                 String listName = input.getText().toString();
                 currentList = new ItemList(listName);
-                itemLists.add(currentList);
+                ListManager.addList(delegate, getApplicationContext(), currentList);
                 updateListsMenu();
                 updateCurrentList();
-                saveLists();
             }
         });
 
@@ -255,6 +226,8 @@ public class MainActivity extends AppCompatActivity
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add Item...");
 
+        final MainActivity delegate = this;
+
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
@@ -265,11 +238,8 @@ public class MainActivity extends AppCompatActivity
                 String itemName = input.getText().toString();
                 Item newItem = new Item(itemName);
 
-                if (currentList != null)
-                    currentList.addItem(newItem);
-
+                ListManager.addItem(delegate, getApplicationContext(), currentList, newItem);
                 updateCurrentList();
-                saveLists();
             }
         });
 
@@ -285,7 +255,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -307,17 +277,15 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.delete_list) {
-            itemLists.remove(currentList);
+            ListManager.removeList(this, getApplicationContext(), currentList);
             currentList = null;
-            if (itemLists.size() > 0) {
-                currentList = itemLists.get(0);
+            if (ListManager.getLists().size() > 0) {
+                currentList = ListManager.getLists().get(0);
             }
 
             updateCurrentList();
             updateListsMenu();
-            saveLists();
         }
 
         if (id == R.id.edit_list) {
@@ -344,7 +312,7 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.add_item) {
             addList();
         } else {
-            currentList = getListWithID(id);
+            currentList = ListManager.getListWithID(id);
             updateCurrentList();
         }
 

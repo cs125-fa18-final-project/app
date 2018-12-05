@@ -3,6 +3,7 @@ package com.example.lib;
 import java.util.Date;
 
 public class Item {
+    private int id;
     private Date date;
     private String name;
     private boolean completed;
@@ -10,7 +11,11 @@ public class Item {
     public Item(String setName) {
         name = setName;
         completed = false;
+        date = new Date();
+        id = hashCode();
     }
+
+    public int getID() { return id; }
 
     public Date getDate() {
         return date;

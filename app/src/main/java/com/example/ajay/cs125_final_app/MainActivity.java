@@ -4,14 +4,20 @@ import java.util.List;
 import java.util.ArrayList;
 import com.example.lib.ItemList;
 import com.example.lib.Item;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -32,6 +38,8 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private final String SHARED_PREFERENCES_KEY = "lists";
 
     private List<ItemList> itemLists;
     private ItemList currentList;
@@ -62,6 +70,7 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         itemLists = new ArrayList();
+        loadLists();
         if (itemLists.size() > 0) {
             currentList = itemLists.get(0);
         }
@@ -70,6 +79,32 @@ public class MainActivity extends AppCompatActivity
 
         updateListsMenu();
         updateCurrentList();
+    }
+
+    private void saveLists() {
+        SharedPreferences prefs = this.getSharedPreferences(this.getPackageName(), Context.MODE_PRIVATE);
+        String json = new Gson().toJson(itemLists);
+        prefs.edit().putString(SHARED_PREFERENCES_KEY, json).apply();
+    }
+
+    private void loadLists() {
+        SharedPreferences prefs = this.getSharedPreferences(this.getPackageName(), Context.MODE_PRIVATE);
+        String json = prefs.getString(SHARED_PREFERENCES_KEY, new Gson().toJson(new ArrayList()));
+        Gson gson = new Gson();
+        JsonParser parser = new JsonParser();
+        JsonArray array = parser.parse(json).getAsJsonArray();
+
+        for (int i = 0; i < array.size(); i++) {
+            itemLists.add(gson.fromJson(array.get(i), ItemList.class));
+        }
+    }
+
+    private ItemList getListWithID(int id) {
+        for (ItemList list : itemLists) {
+            if (list.hashCode() == id) return list;
+        }
+
+        return null;
     }
 
     private void updateListsMenu() {
@@ -118,6 +153,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v) {
                 item.setCompleted(!item.isCompleted());
                 tr.setBackgroundColor(item.isCompleted() ? completedColor : notCompletedColor);
+                saveLists();
             }
         });
 
@@ -141,6 +177,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v) {
                 currentList.removeItem(item);
                 updateCurrentList();
+                saveLists();
             }
         });
 
@@ -184,14 +221,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private ItemList getListWithID(int id) {
-        for (ItemList list : itemLists) {
-            if (list.hashCode() == id) return list;
-        }
-
-        return null;
-    }
-
     private void addList() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add List...");
@@ -208,6 +237,7 @@ public class MainActivity extends AppCompatActivity
                 itemLists.add(currentList);
                 updateListsMenu();
                 updateCurrentList();
+                saveLists();
             }
         });
 
@@ -237,7 +267,9 @@ public class MainActivity extends AppCompatActivity
 
                 if (currentList != null)
                     currentList.addItem(newItem);
+
                 updateCurrentList();
+                saveLists();
             }
         });
 
@@ -285,6 +317,7 @@ public class MainActivity extends AppCompatActivity
 
             updateCurrentList();
             updateListsMenu();
+            saveLists();
         }
 
         if (id == R.id.edit_list) {

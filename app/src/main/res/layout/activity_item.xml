@@ -73,8 +73,8 @@
             android:textStyle="bold" />
 
         <EditText
-            android:id="@+id/item_location"
-            android:layout_width="90dp"
+            android:id="@+id/item_location_latitude"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="2"
             android:ems="10"
@@ -82,10 +82,10 @@
             android:inputType="textPersonName" />
 
         <EditText
-            android:id="@+id/editText5"
-            android:layout_width="129dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:id="@+id/item_location_longitude"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
             android:ems="10"
             android:inputType="textPersonName"
             android:hint="Longitude" />

@@ -17,7 +17,6 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -99,7 +98,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private ItemList getListWithID(int id) {
+    public ItemList getListWithID(int id) {
         for (ItemList list : itemLists) {
             if (list.hashCode() == id) return list;
         }
@@ -198,6 +197,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 Intent editItemIntent = new Intent(delegate, ItemActivity.class);
+                editItemIntent.putExtra("id", item.hashCode());
                 startActivity(editItemIntent);
             }
         });

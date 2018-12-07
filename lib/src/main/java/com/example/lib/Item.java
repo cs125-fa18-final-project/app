@@ -2,7 +2,7 @@ package com.example.lib;
 
 import java.util.Date;
 
-public class Item {
+public class Item implements Comparable<Item> {
     private int id;
     private Date date;
     private String name;
@@ -13,6 +13,14 @@ public class Item {
         completed = false;
         date = new Date();
         id = hashCode();
+    }
+
+    public int compareTo(Item item) {
+        if (item == null) return 1;
+        if (completed && !item.isCompleted()) return 1;
+        if (!completed && item.isCompleted()) return -1;
+
+        return date.compareTo(item.date);
     }
 
     public int getID() { return id; }

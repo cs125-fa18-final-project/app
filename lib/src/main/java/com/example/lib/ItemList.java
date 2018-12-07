@@ -2,6 +2,7 @@ package com.example.lib;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class ItemList {
     private int id;
@@ -28,11 +29,17 @@ public class ItemList {
         return items;
     }
 
+    public void sort() {
+        Collections.sort(items);
+    }
+
     public void addItem(Item newItem) {
         items.add(newItem);
+        sort();
     }
 
     public void removeItem(Item item) {
         items.remove(item);
+        sort();
     }
 }

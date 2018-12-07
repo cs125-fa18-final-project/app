@@ -37,6 +37,9 @@ public class ListManager {
     }
 
     public static void saveLists(Activity delegate, Context context) {
+        for (ItemList l : lists)
+            l.sort();
+
         SharedPreferences prefs = delegate.getSharedPreferences(delegate.getPackageName(),
                 context.MODE_PRIVATE);
         String json = new Gson().toJson(lists);

@@ -3,6 +3,7 @@ package com.example.ajay.cs125_final_app;
 import com.example.lib.ItemList;
 import com.example.lib.Item;
 
+import android.util.Log;
 import android.content.Intent;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -12,6 +13,7 @@ import android.support.v7.app.AlertDialog;
 import android.text.InputType;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -87,9 +89,18 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public int colorizeItem(Item item) {
+        final int completedColor = Color.argb(255, 220, 220, 220);
+        int ming = 100;
+        int maxg = 220;
+        int g = maxg;
+
+        final int notCompletedColor = Color.argb(255, 255, g, 100);
+
+        return item.isCompleted() ? completedColor : notCompletedColor;
+    }
+
     private TableRow generateTableRowForItem(final Item item) {
-        final int completedColor = Color.argb(150, 150, 200, 150);
-        final int notCompletedColor = Color.TRANSPARENT;
         final int deleteButtonColor = Color.argb(255, 200, 20, 20);
 
         final TableRow tr = new TableRow(this);
@@ -102,6 +113,7 @@ public class MainActivity extends AppCompatActivity
         );
         tvlp.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
         tvlp.column = 1;
+        itemTextView.setClickable(true);
         itemTextView.setGravity(Gravity.LEFT);
         itemTextView.setId(item.getID());
         itemTextView.setText(item.getName());
@@ -123,8 +135,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 item.setCompleted(!item.isCompleted());
-                tr.setBackgroundColor(item.isCompleted() ? completedColor : notCompletedColor);
                 ListManager.saveLists(delegate, getApplicationContext());
+                updateCurrentList();
             }
         });
 
@@ -151,7 +163,7 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        tr.setBackgroundColor(item.isCompleted() ? completedColor : notCompletedColor);
+        tr.setBackgroundColor(colorizeItem(item));
         tr.setPadding(20, 10, 20, 10);
         TableRow.LayoutParams trlp = new TableRow.LayoutParams(
                 TableRow.LayoutParams.MATCH_PARENT,

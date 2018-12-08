@@ -3,6 +3,8 @@ package com.example.ajay.cs125_final_app;
 import com.example.lib.ItemList;
 import com.example.lib.Item;
 
+import android.gesture.Gesture;
+import android.support.v4.view.GestureDetectorCompat;
 import android.util.Log;
 import android.content.Intent;
 import android.content.DialogInterface;
@@ -12,6 +14,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -33,8 +36,28 @@ import android.widget.Button;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    private final MainActivity delegate = this;
+
     private ItemList currentList;
-    private boolean isCurrentlyEditing;
+    private Item currentlyRemoved;
+
+    class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onDown(MotionEvent event) { return true; }
+
+        @Override
+        public boolean onFling(MotionEvent event1, MotionEvent event2, float vx, float vy) {
+            if (Math.abs(vx) > Math.abs(vy)) {
+                ListManager.removeItem(delegate, getApplicationContext(), currentList, currentlyRemoved);
+                updateCurrentList();
+                currentlyRemoved = null;
+
+                return true;
+            }
+
+            return false;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +87,6 @@ public class MainActivity extends AppCompatActivity
         if (ListManager.getLists().size() > 0) {
             currentList = ListManager.getLists().get(0);
         }
-
-        isCurrentlyEditing = false;
 
         updateListsMenu();
         updateCurrentList();
@@ -110,7 +131,6 @@ public class MainActivity extends AppCompatActivity
         final int deleteButtonColor = Color.argb(255, 200, 20, 20);
 
         final TableRow tr = new TableRow(this);
-        final MainActivity delegate = this;
 
         final TextView itemTextView = new TextView(this);
         TableRow.LayoutParams tvlp = new TableRow.LayoutParams(
@@ -146,29 +166,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        Button itemDeleteButton = new Button(this);
-        TableRow.LayoutParams idbLayoutParams = new TableRow.LayoutParams(
-                TableRow.LayoutParams.WRAP_CONTENT,
-                TableRow.LayoutParams.WRAP_CONTENT
-        );
-        idbLayoutParams.gravity = Gravity.RIGHT;
-        idbLayoutParams.column = 2;
-        itemDeleteButton.setText("-");
-        itemDeleteButton.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
-        itemDeleteButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30f);
-        itemDeleteButton.setLayoutParams(idbLayoutParams);
-        itemDeleteButton.setBackgroundColor(Color.TRANSPARENT);
-        itemDeleteButton.setTextColor(deleteButtonColor);
-        itemDeleteButton.setId(item.getID());
-        itemDeleteButton.setVisibility(isCurrentlyEditing ? View.VISIBLE : View.INVISIBLE);
-        itemDeleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ListManager.removeItem(delegate, getApplicationContext(), currentList, item);
-                updateCurrentList();
-            }
-        });
-
         tr.setBackgroundColor(colorizeItem(item));
         tr.setPadding(20, 10, 20, 10);
         TableRow.LayoutParams trlp = new TableRow.LayoutParams(
@@ -179,14 +176,22 @@ public class MainActivity extends AppCompatActivity
 
         tr.addView(itemCheckBox);
         tr.addView(itemTextView);
-        tr.addView(itemDeleteButton);
 
-        tr.setOnClickListener(new View.OnClickListener() {
+        final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(this, new MyGestureListener());
+
+        tr.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                Intent editItemIntent = new Intent(delegate, ItemActivity.class);
-                editItemIntent.putExtra("id", item.getID());
-                startActivity(editItemIntent);
+            public boolean onTouch(View v, MotionEvent event) {
+                currentlyRemoved = item;
+                boolean swiped = gestureDetector.onTouchEvent(event);
+                if ((! swiped) && event.getAction() == MotionEvent.ACTION_UP) {
+                    currentlyRemoved = null;
+                    Intent editItemIntent = new Intent(delegate, ItemActivity.class);
+                    editItemIntent.putExtra("id", item.getID());
+                    startActivity(editItemIntent);
+                }
+
+                return true;
             }
         });
 
@@ -212,8 +217,6 @@ public class MainActivity extends AppCompatActivity
     private void addList() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add List...");
-
-        final MainActivity delegate = this;
 
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -243,8 +246,6 @@ public class MainActivity extends AppCompatActivity
     private void addItem() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add Item...");
-
-        final MainActivity delegate = this;
 
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -304,18 +305,6 @@ public class MainActivity extends AppCompatActivity
 
             updateCurrentList();
             updateListsMenu();
-        }
-
-        if (id == R.id.edit_list) {
-            isCurrentlyEditing = !isCurrentlyEditing;
-
-            if (isCurrentlyEditing) {
-                item.setTitle("Finish Editing List");
-            } else {
-                item.setTitle("Edit List...");
-            }
-
-            updateCurrentList();
         }
 
         return super.onOptionsItemSelected(item);

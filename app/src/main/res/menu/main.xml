@@ -6,9 +6,4 @@
         android:orderInCategory="100"
         android:title="Delete List"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/edit_list"
-        android:orderInCategory="200"
-        android:title="Edit List..."
-        app:showAsAction="never" />
 </menu>

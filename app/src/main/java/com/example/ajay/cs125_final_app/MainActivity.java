@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public boolean onFling(MotionEvent event1, MotionEvent event2, float vx, float vy) {
-            if (Math.abs(vx) > Math.abs(vy)) {
+            if (Math.abs(vx) >= 2 * Math.abs(vy)) {
                 ListManager.removeItem(delegate, getApplicationContext(), currentList, currentlyRemoved);
                 updateCurrentList();
                 currentlyRemoved = null;

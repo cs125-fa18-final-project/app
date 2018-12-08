@@ -91,11 +91,17 @@ public class MainActivity extends AppCompatActivity
 
     public int colorizeItem(Item item) {
         final int completedColor = Color.argb(255, 220, 220, 220);
-        int ming = 100;
-        int maxg = 220;
-        int g = maxg;
+        double ming = 80;
+        double maxg = 240;
+        double g;
+        double incompleteSize = 0;
+        for (Item i : currentList.getItems())
+            if (! i.isCompleted()) incompleteSize++;
 
-        final int notCompletedColor = Color.argb(255, 255, g, 100);
+        double proximityQuotient = (double) (currentList.getItems().indexOf(item)) / incompleteSize;
+        g = ming + ((maxg - ming) * proximityQuotient);
+
+        final int notCompletedColor = Color.argb(255, 255, (int)g, 50);
 
         return item.isCompleted() ? completedColor : notCompletedColor;
     }

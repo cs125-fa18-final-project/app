@@ -2,10 +2,15 @@ package com.example.ajay.cs125_final_app;
 
 import com.example.lib.ItemList;
 import com.example.lib.Item;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 
-import android.gesture.Gesture;
+import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
-import android.util.Log;
+
+import com.google.android.gms.common.api.ApiException;
 import android.content.Intent;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -13,6 +18,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -28,6 +34,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -37,9 +44,10 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private final MainActivity delegate = this;
-
     private ItemList currentList;
     private Item currentlyRemoved;
+    private GoogleSignInClient signInClient;
+    private final int RC_SIGN_IN = 111;
 
     class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
@@ -83,6 +91,10 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail().requestProfile().build();
+        signInClient = GoogleSignIn.getClient(this, gso);
+
         ListManager.loadLists(this, getApplicationContext());
         if (ListManager.getLists().size() > 0) {
             currentList = ListManager.getLists().get(0);
@@ -90,6 +102,61 @@ public class MainActivity extends AppCompatActivity
 
         updateListsMenu();
         updateCurrentList();
+
+        ImageView signin = navigationView.getHeaderView(0).findViewById(R.id.signIn);
+        signin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                signInClient.signOut();
+                signIn();
+            }
+        });
+    }
+
+    private void signIn() {
+        Log.d("updateUI", "signing in");
+        Intent signinintent = signInClient.getSignInIntent();
+        startActivityForResult(signinintent, RC_SIGN_IN);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            try {
+                GoogleSignInAccount account = GoogleSignIn.getSignedInAccountFromIntent(data)
+                        .getResult(ApiException.class);
+                Log.d("updateUI", String.format("sign in successful %s", account));
+                updateSignInUI(account);
+            } catch (ApiException e) {
+                e.printStackTrace();
+                Log.d("updateUI", String.format("sign in failed %s", e.getMessage()));
+            }
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        updateSignInUI(account);
+    }
+
+    private void updateSignInUI(GoogleSignInAccount account) {
+        Log.d("updateUI", String.format("%s\n", account));
+
+        if (account == null) return;
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        ImageView accountImage = navigationView.getHeaderView(0).findViewById(R.id.signIn);
+        TextView accountEmail = navigationView.getHeaderView(0).findViewById(R.id.accountEmail);
+        TextView accountUsername = navigationView.getHeaderView(0).findViewById(R.id.accountUsername);
+
+        accountEmail.setText(account.getEmail());
+        accountUsername.setText(account.getDisplayName());
+        accountImage.setImageURI(account.getPhotoUrl());
     }
 
     @Override

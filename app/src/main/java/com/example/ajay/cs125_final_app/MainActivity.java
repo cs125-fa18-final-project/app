@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity
         TextView accountUsername = navigationView.getHeaderView(0).findViewById(R.id.accountUsername);
 
         if (account == null) {
-            Picasso.get().load(R.mipmap.ic_launcher_round).into(accountImage);
+            // Picasso.get().load(R.mipmap.ic_launcher_round).into(accountImage);
             return;
         }
 
@@ -253,8 +253,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 currentlyRemoved = item;
-                boolean swiped = gestureDetector.onTouchEvent(event);
-                if ((! swiped) && event.getAction() == MotionEvent.ACTION_UP) {
+                gestureDetector.onTouchEvent(event);
+                if (event.getAction() == MotionEvent.ACTION_UP) {
                     currentlyRemoved = null;
                     Intent editItemIntent = new Intent(delegate, ItemActivity.class);
                     editItemIntent.putExtra("id", item.getID());

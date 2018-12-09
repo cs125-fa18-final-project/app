@@ -2,22 +2,42 @@ package com.example.ajay.cs125_final_app;
 
 import com.example.lib.Item;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Looper;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import android.provider.CalendarContract;
+import me.everything.providers.android.calendar.CalendarProvider;
+import me.everything.providers.android.calendar.Event;
 
 public class ItemActivity extends AppCompatActivity {
 
@@ -65,7 +85,7 @@ public class ItemActivity extends AppCompatActivity {
         calendarButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(delegate, "Check calendar", Toast.LENGTH_SHORT).show();
+                checkCalendar();
             }
         });
 
@@ -76,6 +96,212 @@ public class ItemActivity extends AppCompatActivity {
                 Toast.makeText(delegate, "Set location", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    class CalDataLoader implements Runnable {
+        private TextView view;
+        public CalDataLoader(TextView textView) {
+            view = textView;
+        }
+
+        public void run() {
+            if (ContextCompat.checkSelfPermission(ItemActivity.this, Manifest.permission.READ_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED) {
+                view.setText("Calendar permissions denied");
+                ActivityCompat.requestPermissions(ItemActivity.this,
+                        new String[]{Manifest.permission.READ_CALENDAR},
+                        911);
+            } else {
+                CalendarProvider calendarProvider = new CalendarProvider(getApplicationContext());
+                int nitems = 0;
+                List<me.everything.providers.android.calendar.Calendar> cals = calendarProvider.getCalendars().getList();
+
+                SimpleDateFormat comparisonFormat = new SimpleDateFormat("MM/dd/yyyy");
+                String itemDateString = itemDate.getText().toString();
+
+                for (me.everything.providers.android.calendar.Calendar cal : cals) {
+                    List<Event> events = calendarProvider.getEvents(cal.id).getList();
+                    for (Event event : events) {
+                        String startdate = comparisonFormat.format(new Date(event.dTStart));
+                        String enddate = comparisonFormat.format(new Date(event.dTend));
+
+                        if (startdate.equals(itemDateString) || enddate.equals(itemDateString))
+                            nitems++;
+                    }
+                }
+
+                view.setText(String.format("%d events on the same day", nitems));
+            }
+        }
+    }
+
+    private void checkCalendar() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(itemDate.getText().toString());
+        TextView view = new TextView(this);
+
+        view.setText("Loading...");
+        view.setPadding(50, 50, 50, 50);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
+
+        builder.setPositiveButton("Add to calendar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                addToCalendar();
+                dialog.cancel();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.setView(view);
+        builder.show();
+
+        Thread dataLoaderThread = new Thread(new CalDataLoader(view));
+        dataLoaderThread.start();
+    }
+
+    private void addToCalendar() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Calendar");
+        final View builderView = addToCalViewBuilder();
+
+        builder.setView(builderView);
+
+        builder.setPositiveButton("Add To Calendar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Spinner spinner = builderView.findViewById(R.id.calendar_options_spinner);
+                String calName = (String) spinner.getSelectedItem();
+                Thread writerThread = new Thread(new CalendarWriter(calName));
+                writerThread.start();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
+    private void threadToaster(String message) {
+        Looper.getMainLooper().prepare();
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    class CalendarWriter implements Runnable {
+        private String calName;
+
+        public CalendarWriter(String cn) {
+            calName = cn;
+        }
+
+        public void run() {
+            if (ContextCompat.checkSelfPermission(ItemActivity.this, Manifest.permission.WRITE_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED) {
+                threadToaster("Calendar permissions denied");
+                ActivityCompat.requestPermissions(ItemActivity.this,
+                        new String[]{Manifest.permission.WRITE_CALENDAR},
+                        807);
+            } else {
+                CalendarProvider provider = new CalendarProvider(ItemActivity.this);
+                List<me.everything.providers.android.calendar.Calendar> cals = provider.getCalendars().getList();
+                me.everything.providers.android.calendar.Calendar theCal = null;
+
+                for (me.everything.providers.android.calendar.Calendar cal : cals) {
+                    if (cal.displayName.equals(calName)) {
+                        theCal = cal;
+                        break;
+                    }
+                }
+
+                if (theCal == null) return;
+
+                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+                Date theDate = null;
+                try {
+                    theDate = sdf.parse(itemDate.getText().toString());
+                } catch (Exception e) {
+                    theDate = new Date();
+                }
+
+                long calID = theCal.id;
+                long startMillis = theDate.getTime() + (86400 * 500);
+                long endMillis = startMillis + 60000;
+
+                ContentResolver cr = getContentResolver();
+                ContentValues values = new ContentValues();
+                values.put(CalendarContract.Events.DTSTART, startMillis);
+                values.put(CalendarContract.Events.DTEND, endMillis);
+                values.put(CalendarContract.Events.TITLE,
+                        String.format("appname: %s", itemName.getText().toString()));
+                values.put(CalendarContract.Events.DESCRIPTION, "CS125APPTEST");
+                values.put(CalendarContract.Events.CALENDAR_ID, calID);
+                values.put(CalendarContract.Events.EVENT_TIMEZONE, Calendar.getInstance().getTimeZone().getDisplayName());
+                cr.insert(CalendarContract.Events.CONTENT_URI, values);
+
+                threadToaster(String.format("'%s' added to '%s'", itemName.getText().toString(), calName));
+            }
+        }
+    }
+
+    private View addToCalViewBuilder() {
+        View theView = LayoutInflater.from(this).inflate(R.layout.add_to_calendar_layout, null);
+        Spinner theSpinner = theView.findViewById(R.id.calendar_options_spinner);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                R.layout.support_simple_spinner_dropdown_item, new String[]{ "Loading..." });
+        adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        theSpinner.setAdapter(adapter);
+
+        Thread optionsLoaderThread = new Thread(new CalendarOptionsLoader(theSpinner));
+        optionsLoaderThread.start();
+
+        return theView;
+    }
+
+    class CalendarOptionsLoader implements Runnable {
+        private Spinner spinner;
+        public CalendarOptionsLoader(Spinner mSpinner) {
+            spinner = mSpinner;
+        }
+
+        public void run() {
+            if (ContextCompat.checkSelfPermission(ItemActivity.this, Manifest.permission.READ_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ArrayAdapter<String> aa = new ArrayAdapter<>(ItemActivity.this,
+                        R.layout.support_simple_spinner_dropdown_item, new String[]{
+                                "Calendar permissions denied"
+                });
+                aa.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+                spinner.setAdapter(aa);
+
+                ActivityCompat.requestPermissions(ItemActivity.this,
+                        new String[]{Manifest.permission.READ_CALENDAR},
+                        911);
+            } else {
+                CalendarProvider provider = new CalendarProvider(ItemActivity.this);
+                List<me.everything.providers.android.calendar.Calendar> cals = provider.getCalendars().getList();
+                List<String> calNames = new ArrayList<>();
+
+                for (me.everything.providers.android.calendar.Calendar cal : cals)
+                    calNames.add(cal.displayName);
+
+                ArrayAdapter<String> aa = new ArrayAdapter<>(ItemActivity.this,
+                        R.layout.support_simple_spinner_dropdown_item, calNames);
+                aa.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+                spinner.setAdapter(aa);
+            }
+        }
     }
 
     @Override

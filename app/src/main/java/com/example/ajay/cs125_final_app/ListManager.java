@@ -15,15 +15,13 @@ import android.content.Context;
 public class ListManager {
     private static final String SHARED_PREFERENCES_KEY = "lists";
 
-    private static List<ItemList> lists;
+    private static List<ItemList> lists = new ArrayList<>();
 
     public static List<ItemList> getLists() {
         return lists;
     }
 
     public static void loadLists(Activity delegate, Context context) {
-        if (lists == null) lists = new ArrayList();
-
         SharedPreferences prefs = delegate.getSharedPreferences(delegate.getPackageName(),
                 context.MODE_PRIVATE);
         String json = prefs.getString(SHARED_PREFERENCES_KEY, new Gson().toJson(new ArrayList()));

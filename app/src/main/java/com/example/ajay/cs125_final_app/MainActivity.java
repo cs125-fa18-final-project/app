@@ -7,10 +7,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 
+import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 
 import com.google.android.gms.common.api.ApiException;
+import com.squareup.picasso.Picasso;
+
 import android.content.Intent;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -114,7 +117,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void signIn() {
-        Log.d("updateUI", "signing in");
         Intent signinintent = signInClient.getSignInIntent();
         startActivityForResult(signinintent, RC_SIGN_IN);
     }
@@ -127,11 +129,9 @@ public class MainActivity extends AppCompatActivity
             try {
                 GoogleSignInAccount account = GoogleSignIn.getSignedInAccountFromIntent(data)
                         .getResult(ApiException.class);
-                Log.d("updateUI", String.format("sign in successful %s", account));
                 updateSignInUI(account);
             } catch (ApiException e) {
                 e.printStackTrace();
-                Log.d("updateUI", String.format("sign in failed %s", e.getMessage()));
             }
         }
     }
@@ -145,18 +145,21 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateSignInUI(GoogleSignInAccount account) {
-        Log.d("updateUI", String.format("%s\n", account));
-
-        if (account == null) return;
-
         NavigationView navigationView = findViewById(R.id.nav_view);
         ImageView accountImage = navigationView.getHeaderView(0).findViewById(R.id.signIn);
         TextView accountEmail = navigationView.getHeaderView(0).findViewById(R.id.accountEmail);
         TextView accountUsername = navigationView.getHeaderView(0).findViewById(R.id.accountUsername);
 
+        if (account == null) {
+            Picasso.get().load(R.mipmap.ic_launcher_round).into(accountImage);
+            return;
+        }
+
+        Uri imageUri = account.getPhotoUrl();
+        Log.d("imageUri", String.format("%s\n", imageUri));
+        Picasso.get().load(imageUri).placeholder(R.mipmap.ic_launcher_round).into(accountImage);
         accountEmail.setText(account.getEmail());
         accountUsername.setText(account.getDisplayName());
-        accountImage.setImageURI(account.getPhotoUrl());
     }
 
     @Override

@@ -7,6 +7,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
@@ -118,6 +120,9 @@ public class MainActivity extends AppCompatActivity
                 signIn();
             }
         });
+
+        Intent serviceIntent = new Intent(this, ItemAlertService.class);
+        startService(serviceIntent);
     }
 
     private void signIn() {

@@ -180,6 +180,8 @@ public class ItemActivity extends AppCompatActivity {
                 String calName = (String) spinner.getSelectedItem();
                 Thread writerThread = new Thread(new CalendarWriter(calName));
                 writerThread.start();
+                Toast.makeText(ItemActivity.this, String.format("'%s' added to %s",
+                        itemName.getText().toString(), calName), Toast.LENGTH_SHORT).show();
             }
         });
 

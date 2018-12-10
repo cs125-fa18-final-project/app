@@ -8,11 +8,21 @@ public class ItemList {
     private int id;
     private String name;
     private List<Item> items;
+    private String username;
 
     public ItemList(String setName) {
         name = setName;
+        username = "";
         items = new ArrayList();
         id = hashCode();
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public int getID() { return id; }

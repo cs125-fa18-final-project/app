@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity
     private ItemList currentList;
     private Item currentlyRemoved;
     private GoogleSignInClient signInClient;
+    private String username = "";
     private final int RC_SIGN_IN = 111;
 
     class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -99,8 +100,11 @@ public class MainActivity extends AppCompatActivity
         signInClient = GoogleSignIn.getClient(this, gso);
 
         ListManager.loadLists(this, getApplicationContext());
-        if (ListManager.getLists().size() > 0) {
-            currentList = ListManager.getLists().get(0);
+        for (ItemList list : ListManager.getLists()) {
+            if (list.getUsername().equals(username)) {
+                currentList = list;
+                break;
+            }
         }
 
         updateListsMenu();
@@ -160,6 +164,17 @@ public class MainActivity extends AppCompatActivity
         Picasso.get().load(imageUri).placeholder(R.mipmap.ic_launcher_round).into(accountImage);
         accountEmail.setText(account.getEmail());
         accountUsername.setText(account.getDisplayName());
+
+        username = account.getEmail();
+        currentList = null;
+        for (ItemList list : ListManager.getLists()) {
+            if (list.getUsername().equals(username)) {
+                currentList = list;
+                break;
+            }
+        }
+        updateListsMenu();
+        updateCurrentList();
     }
 
     @Override
@@ -176,7 +191,8 @@ public class MainActivity extends AppCompatActivity
         listsMenu.removeGroup(R.id.lists_menu_group);
 
         for (ItemList list : ListManager.getLists()) {
-            listsMenu.add(R.id.lists_menu_group, list.getID(), 0, list.getName());
+            if (list.getUsername().equals(username))
+                listsMenu.add(R.id.lists_menu_group, list.getID(), 0, list.getName());
         }
     }
 
@@ -297,6 +313,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(DialogInterface dialog, int which) {
                 String listName = input.getText().toString();
                 currentList = new ItemList(listName);
+                currentList.setUsername(username);
                 ListManager.addList(delegate, getApplicationContext(), currentList);
                 updateListsMenu();
                 updateCurrentList();

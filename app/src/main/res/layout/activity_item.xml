@@ -58,43 +58,10 @@
     </LinearLayout>
 
     <LinearLayout
-        android:padding="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="0"
-            android:gravity="center_vertical"
-            android:text="Location: "
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/item_location_latitude"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="2"
-            android:ems="10"
-            android:hint="Latitude"
-            android:inputType="textPersonName" />
-
-        <EditText
-            android:id="@+id/item_location_longitude"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="2"
-            android:ems="10"
-            android:inputType="textPersonName"
-            android:hint="Longitude" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="5sp">
 
         <Button
             android:id="@+id/calendar_button"
@@ -116,7 +83,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        android:padding="20px">
+        android:padding="10sp">
 
         <fragment xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"

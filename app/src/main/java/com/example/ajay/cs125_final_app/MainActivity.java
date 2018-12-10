@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity
 
         Uri imageUri = account.getPhotoUrl();
         Log.d("imageUri", String.format("%s\n", imageUri));
-        Picasso.get().load(imageUri).placeholder(R.mipmap.ic_launcher_round).into(accountImage);
+        Picasso.get().load(imageUri).fit().placeholder(R.mipmap.ic_launcher_round).into(accountImage);
         accountEmail.setText(account.getEmail());
         accountUsername.setText(account.getDisplayName());
 
@@ -214,8 +214,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     private TableRow generateTableRowForItem(final Item item) {
-        final int deleteButtonColor = Color.argb(255, 200, 20, 20);
-
         final TableRow tr = new TableRow(this);
 
         final TextView itemTextView = new TextView(this);
@@ -252,7 +250,9 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        tr.setBackgroundColor(colorizeItem(item));
+        final int color = colorizeItem(item);
+
+        tr.setBackgroundColor(color);
         tr.setPadding(20, 10, 20, 10);
         TableRow.LayoutParams trlp = new TableRow.LayoutParams(
                 TableRow.LayoutParams.MATCH_PARENT,
@@ -265,12 +265,20 @@ public class MainActivity extends AppCompatActivity
 
         final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(this, new MyGestureListener());
 
-        tr.setOnTouchListener(new View.OnTouchListener() {
+        View.OnTouchListener listener = new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    int r = Color.red(color) / 2;
+                    int g = Color.green(color) / 2;
+                    int b = Color.blue(color) / 2;
+                    tr.setBackgroundColor(Color.argb(255, r, g, b));
+                }
+
                 currentlyRemoved = item;
-                gestureDetector.onTouchEvent(event);
-                if (event.getAction() == MotionEvent.ACTION_UP) {
+                boolean swiped = gestureDetector.onTouchEvent(event);
+                if (!swiped && event.getAction() == MotionEvent.ACTION_UP) {
+                    tr.setBackgroundColor(color);
                     currentlyRemoved = null;
                     Intent editItemIntent = new Intent(delegate, ItemActivity.class);
                     editItemIntent.putExtra("id", item.getID());
@@ -279,7 +287,10 @@ public class MainActivity extends AppCompatActivity
 
                 return true;
             }
-        });
+        };
+
+        tr.setOnTouchListener(listener);
+        itemTextView.setOnTouchListener(listener);
 
         return tr;
     }

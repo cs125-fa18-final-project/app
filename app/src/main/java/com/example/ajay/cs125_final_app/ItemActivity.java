@@ -1,6 +1,17 @@
 package com.example.ajay.cs125_final_app;
 
 import com.example.lib.Item;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import android.Manifest;
 import android.app.Activity;
@@ -10,9 +21,11 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.net.Uri;
+import android.location.Location;
+import android.location.LocationProvider;
 import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -25,6 +38,7 @@ import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,6 +60,10 @@ public class ItemActivity extends AppCompatActivity {
     private Item item;
     private Button calendarButton;
     private Button locationButton;
+    private SupportMapFragment mapFragment;
+    private boolean locationSet = false;
+    private double latitude;
+    private double longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +111,76 @@ public class ItemActivity extends AppCompatActivity {
         locationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(delegate, "Set location", Toast.LENGTH_SHORT).show();
+                if (!locationSet) return;
+
+                item.setLatitude(latitude);
+                item.setLongitude(longitude);
+
+                Toast.makeText(delegate, "Location set", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapFragment);
+        mapFragment.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(final GoogleMap googleMap) {
+                googleMap.setBuildingsEnabled(true);
+
+                googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                    @Override
+                    public void onMapClick(LatLng latlng) {
+                        googleMap.clear();
+
+                        MarkerOptions marker = new MarkerOptions().position(latlng).title(item.getName());
+                        marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                        googleMap.addMarker(marker);
+                        float z = googleMap.getCameraPosition().zoom;
+                        CameraPosition campos = new CameraPosition.Builder().target(latlng).zoom(z).build();
+                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(campos));
+
+                        latitude = latlng.latitude;
+                        longitude = latlng.longitude;
+                        locationSet = true;
+                    }
+                });
+
+                if (ContextCompat.checkSelfPermission(ItemActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(ItemActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            813);
+                } else {
+                    googleMap.setMyLocationEnabled(true);
+
+                    if (item.hasLocation()) {
+                        LatLng latlng = new LatLng(item.getLatitude(), item.getLongitude());
+                        MarkerOptions marker = new MarkerOptions().position(latlng).title(item.getName());
+                        marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                        googleMap.addMarker(marker);
+                        CameraPosition campos = new CameraPosition.Builder().target(latlng).zoom(12).build();
+                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(campos));
+
+                        latitude = latlng.latitude;
+                        longitude = latlng.longitude;
+                    } else {
+                        FusedLocationProviderClient client = LocationServices
+                                .getFusedLocationProviderClient(delegate);
+                        client.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                LatLng latlng = new LatLng(location.getLatitude(), location.getLongitude());
+                                MarkerOptions marker = new MarkerOptions().position(latlng).title(item.getName());
+                                marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                                googleMap.addMarker(marker);
+                                CameraPosition campos = new CameraPosition.Builder().target(latlng).zoom(12).build();
+                                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(campos));
+
+                                latitude = latlng.latitude;
+                                longitude = latlng.longitude;
+                            }
+                        });
+                    }
+                }
             }
         });
     }

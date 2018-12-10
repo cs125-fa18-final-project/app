@@ -7,10 +7,16 @@ public class Item implements Comparable<Item> {
     private Date date;
     private String name;
     private boolean completed;
+    private double latitude;
+    private double longitude;
+    private boolean hasLocation;
 
     public Item(String setName) {
         name = setName;
         completed = false;
+        hasLocation = false;
+        longitude = 0;
+        latitude = 0;
         date = new Date();
         id = hashCode();
     }
@@ -21,6 +27,32 @@ public class Item implements Comparable<Item> {
         if (!completed && item.isCompleted()) return -1;
 
         return date.compareTo(item.date);
+    }
+
+    public boolean hasLocation() {
+        return hasLocation;
+    }
+
+    public void setHasLocation(boolean hasLocation) {
+        this.hasLocation = hasLocation;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+        this.hasLocation = true;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+        this.hasLocation = true;
     }
 
     public int getID() { return id; }

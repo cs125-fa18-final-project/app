@@ -80,12 +80,12 @@ public class ItemAlertService extends Service {
                 Location loc = locationResult.getLastLocation();
                 for (ItemList list : lists) {
                     for (Item item : list.getItems()) {
-                        if (!item.hasLocation()) continue;
+                        if (!item.hasLocation() || item.isCompleted()) continue;
                         float[] results = new float[1];
                         Location.distanceBetween(loc.getLatitude(), loc.getLongitude(),
                                 item.getLatitude(), item.getLongitude(), results);
                         float dist = results[0];
-                        if (dist < 20) {
+                        if (dist < 30) {
                             Intent notificationIntent = new Intent(ItemAlertService.this, MainActivity.class);
 
                             PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,

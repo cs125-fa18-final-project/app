@@ -159,7 +159,7 @@ public class ItemActivity extends AppCompatActivity {
                         != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(ItemActivity.this,
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                            813);
+                            711);
                 } else {
                     googleMap.setMyLocationEnabled(true);
 
@@ -168,7 +168,7 @@ public class ItemActivity extends AppCompatActivity {
                         MarkerOptions marker = new MarkerOptions().position(latlng).title(item.getName());
                         marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                         googleMap.addMarker(marker);
-                        CameraPosition campos = new CameraPosition.Builder().target(latlng).zoom(12).build();
+                        CameraPosition campos = new CameraPosition.Builder().target(latlng).zoom(16).build();
                         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(campos));
 
                         latitude = latlng.latitude;
@@ -183,7 +183,7 @@ public class ItemActivity extends AppCompatActivity {
                                 MarkerOptions marker = new MarkerOptions().position(latlng).title(item.getName());
                                 marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                                 googleMap.addMarker(marker);
-                                CameraPosition campos = new CameraPosition.Builder().target(latlng).zoom(12).build();
+                                CameraPosition campos = new CameraPosition.Builder().target(latlng).zoom(16).build();
                                 googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(campos));
 
                                 latitude = latlng.latitude;

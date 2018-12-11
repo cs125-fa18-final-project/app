@@ -6,11 +6,15 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
@@ -38,10 +42,8 @@ public class ItemAlertService extends Service {
     private final String CHANNELDESC = "QuicklistAlertService";
 
     private List<ItemList> lists;
-    private FusedLocationProviderClient client;
 
-    public ItemAlertService() {
-    }
+    public ItemAlertService() { }
 
     private void loadLists() {
         SharedPreferences prefs = this.getSharedPreferences(this.getPackageName(),
@@ -62,30 +64,25 @@ public class ItemAlertService extends Service {
         super.onCreate();
         createNotificationChannel();
 
-        client = LocationServices.getFusedLocationProviderClient(this);
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             return;
         }
 
-        client.requestLocationUpdates(new LocationRequest(), new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    return;
-                }
+        LocationManager manager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
 
+        manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10f, new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
                 loadLists();
-                Location loc = locationResult.getLastLocation();
                 for (ItemList list : lists) {
                     for (Item item : list.getItems()) {
                         if (!item.hasLocation() || item.isCompleted()) continue;
                         float[] results = new float[1];
-                        Location.distanceBetween(loc.getLatitude(), loc.getLongitude(),
+                        Location.distanceBetween(location.getLatitude(), location.getLongitude(),
                                 item.getLatitude(), item.getLongitude(), results);
                         float dist = results[0];
-                        if (dist < 30) {
+                        if (dist < 50) {
                             Intent notificationIntent = new Intent(ItemAlertService.this, MainActivity.class);
 
                             PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
@@ -102,7 +99,13 @@ public class ItemAlertService extends Service {
                     }
                 }
             }
-        }, null);
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) { }
+            @Override
+            public void onProviderEnabled(String provider) { }
+            @Override
+            public void onProviderDisabled(String provider) { }
+        });
     }
 
     @Override
@@ -125,7 +128,6 @@ public class ItemAlertService extends Service {
                 .setTicker("ticker text").build();
 
         startForeground(1337, notification);
-        NotificationManagerCompat.from(this).notify(1337, notification);
 
         return super.onStartCommand(intent, flags, startId);
     }

@@ -23,7 +23,9 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationProvider;
+import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -64,6 +66,15 @@ public class ItemActivity extends AppCompatActivity {
     private boolean locationSet = false;
     private double latitude;
     private double longitude;
+
+    private final int CAL_WRITE_RESULT = 0;
+    private Handler calWriteHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            if (msg.what == CAL_WRITE_RESULT) {
+                Toast.makeText(ItemActivity.this, (String) msg.obj, Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -267,8 +278,6 @@ public class ItemActivity extends AppCompatActivity {
                 String calName = (String) spinner.getSelectedItem();
                 Thread writerThread = new Thread(new CalendarWriter(calName));
                 writerThread.start();
-                Toast.makeText(ItemActivity.this, String.format("'%s' added to %s",
-                        itemName.getText().toString(), calName), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -282,11 +291,6 @@ public class ItemActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void threadToaster(String message) {
-        Looper.getMainLooper().prepare();
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
     class CalendarWriter implements Runnable {
         private String calName;
 
@@ -297,7 +301,10 @@ public class ItemActivity extends AppCompatActivity {
         public void run() {
             if (ContextCompat.checkSelfPermission(ItemActivity.this, Manifest.permission.WRITE_CALENDAR)
                     != PackageManager.PERMISSION_GRANTED) {
-                threadToaster("Calendar permissions denied");
+                Message msg = new Message();
+                msg.obj = "Calendar permissions denied";
+                msg.what = CAL_WRITE_RESULT;
+                calWriteHandler.sendMessage(msg);
                 ActivityCompat.requestPermissions(ItemActivity.this,
                         new String[]{Manifest.permission.WRITE_CALENDAR},
                         807);
@@ -332,13 +339,16 @@ public class ItemActivity extends AppCompatActivity {
                 values.put(CalendarContract.Events.DTSTART, startMillis);
                 values.put(CalendarContract.Events.DTEND, endMillis);
                 values.put(CalendarContract.Events.TITLE,
-                        String.format("appname: %s", itemName.getText().toString()));
+                        String.format("Quicklist: %s", itemName.getText().toString()));
                 values.put(CalendarContract.Events.DESCRIPTION, String.format("Quicklist: %s", item.getName()));
                 values.put(CalendarContract.Events.CALENDAR_ID, calID);
                 values.put(CalendarContract.Events.EVENT_TIMEZONE, Calendar.getInstance().getTimeZone().getDisplayName());
                 cr.insert(CalendarContract.Events.CONTENT_URI, values);
 
-                threadToaster(String.format("'%s' added to '%s'", itemName.getText().toString(), calName));
+                Message msg = new Message();
+                msg.what = CAL_WRITE_RESULT;
+                msg.obj = String.format("'%s' added to '%s'", itemName.getText().toString(), calName);
+                calWriteHandler.sendMessage(msg);
             }
         }
     }

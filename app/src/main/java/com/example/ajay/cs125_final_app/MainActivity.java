@@ -10,6 +10,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 
@@ -53,8 +55,53 @@ public class MainActivity extends AppCompatActivity
     private ItemList currentList;
     private Item currentlyRemoved;
     private GoogleSignInClient signInClient;
+    private GoogleSignInAccount account;
     private String username = "";
     private final int RC_SIGN_IN = 111;
+
+    private final int LOAD_LISTS_MESSAGE = 0;
+    private final int LOAD_SIGN_IN = 1;
+    private final Handler handler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case LOAD_LISTS_MESSAGE:
+                    updateListsMenu();
+                    updateCurrentList();
+                    break;
+                case LOAD_SIGN_IN:
+                    updateSignInUI();
+            }
+        }
+    };
+
+    class ListDataLoader implements Runnable {
+        public void run() {
+            ListManager.loadLists(MainActivity.this, getApplicationContext());
+            for (ItemList list : ListManager.getLists()) {
+                if (list.getUsername().equals(username)) {
+                    currentList = list;
+                    break;
+                }
+            }
+
+            handler.sendEmptyMessage(LOAD_LISTS_MESSAGE);
+        }
+    }
+
+    class GoogleClientInitializer implements Runnable {
+        public void run() {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestEmail().requestProfile().build();
+            signInClient = GoogleSignIn.getClient(MainActivity.this, gso);
+        }
+    }
+
+    class GoogleClientSignin implements Runnable {
+        public void run() {
+            account = GoogleSignIn.getLastSignedInAccount(MainActivity.this);
+            handler.sendEmptyMessage(LOAD_SIGN_IN);
+        }
+    }
 
     class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
@@ -100,20 +147,13 @@ public class MainActivity extends AppCompatActivity
 
         findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
 
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail().requestProfile().build();
-        signInClient = GoogleSignIn.getClient(this, gso);
+        setTitle("Loading...");
 
-        ListManager.loadLists(this, getApplicationContext());
-        for (ItemList list : ListManager.getLists()) {
-            if (list.getUsername().equals(username)) {
-                currentList = list;
-                break;
-            }
-        }
+        Thread listLoaderThread = new Thread(new ListDataLoader());
+        listLoaderThread.start();
 
-        updateListsMenu();
-        updateCurrentList();
+        Thread clientInitializerThread = new Thread(new GoogleClientInitializer());
+        clientInitializerThread.start();
 
         ImageView signin = navigationView.getHeaderView(0).findViewById(R.id.signIn);
         signin.setOnClickListener(new View.OnClickListener() {
@@ -139,9 +179,9 @@ public class MainActivity extends AppCompatActivity
 
         if (requestCode == RC_SIGN_IN) {
             try {
-                GoogleSignInAccount account = GoogleSignIn.getSignedInAccountFromIntent(data)
+                account = GoogleSignIn.getSignedInAccountFromIntent(data)
                         .getResult(ApiException.class);
-                updateSignInUI(account);
+                updateSignInUI();
             } catch (ApiException e) {
                 e.printStackTrace();
             }
@@ -152,20 +192,18 @@ public class MainActivity extends AppCompatActivity
     protected void onStart() {
         super.onStart();
 
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        updateSignInUI(account);
+        Thread signinThread = new Thread(new GoogleClientSignin());
+        signinThread.start();
     }
 
-    private void updateSignInUI(GoogleSignInAccount account) {
+    private void updateSignInUI() {
         NavigationView navigationView = findViewById(R.id.nav_view);
         ImageView accountImage = navigationView.getHeaderView(0).findViewById(R.id.signIn);
         TextView accountEmail = navigationView.getHeaderView(0).findViewById(R.id.accountEmail);
         TextView accountUsername = navigationView.getHeaderView(0).findViewById(R.id.accountUsername);
 
-        if (account == null) {
-            // Picasso.get().load(R.mipmap.ic_launcher_round).into(accountImage);
+        if (account == null)
             return;
-        }
 
         Uri imageUri = account.getPhotoUrl();
         Log.d("imageUri", String.format("%s\n", imageUri));

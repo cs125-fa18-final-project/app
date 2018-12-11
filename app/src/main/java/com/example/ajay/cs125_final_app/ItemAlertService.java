@@ -97,7 +97,7 @@ public class ItemAlertService extends Service {
                                     .setContentText(String.format("Location alert: %s", item.getName()))
                                     .setContentIntent(pendingIntent)
                                     .build();
-                            NotificationManagerCompat.from(ItemAlertService.this).notify(1337, notification);
+                            ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(1338, notification);
                         }
                     }
                 }

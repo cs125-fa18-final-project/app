@@ -333,7 +333,7 @@ public class ItemActivity extends AppCompatActivity {
                 values.put(CalendarContract.Events.DTEND, endMillis);
                 values.put(CalendarContract.Events.TITLE,
                         String.format("appname: %s", itemName.getText().toString()));
-                values.put(CalendarContract.Events.DESCRIPTION, "CS125APPTEST");
+                values.put(CalendarContract.Events.DESCRIPTION, String.format("Quicklist: %s", item.getName()));
                 values.put(CalendarContract.Events.CALENDAR_ID, calID);
                 values.put(CalendarContract.Events.EVENT_TIMEZONE, Calendar.getInstance().getTimeZone().getDisplayName());
                 cr.insert(CalendarContract.Events.CONTENT_URI, values);

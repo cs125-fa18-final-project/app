@@ -29,6 +29,8 @@ public class ListManager {
         JsonParser parser = new JsonParser();
         JsonArray array = parser.parse(json).getAsJsonArray();
 
+        lists = new ArrayList<>();
+
         for (int i = 0; i < array.size(); i++)
             lists.add(gson.fromJson(array.get(i), ItemList.class));
     }

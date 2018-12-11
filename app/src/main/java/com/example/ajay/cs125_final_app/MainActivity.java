@@ -40,6 +40,7 @@ import android.view.MenuItem;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -96,6 +97,8 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail().requestProfile().build();
@@ -278,10 +281,14 @@ public class MainActivity extends AppCompatActivity
                     int g = Color.green(color) / 2;
                     int b = Color.blue(color) / 2;
                     tr.setBackgroundColor(Color.argb(255, r, g, b));
+                    findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+                    return true;
                 }
 
                 currentlyRemoved = item;
                 boolean swiped = gestureDetector.onTouchEvent(event);
+                if (swiped) findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+
                 if (!swiped && event.getAction() == MotionEvent.ACTION_UP) {
                     tr.setBackgroundColor(color);
                     currentlyRemoved = null;
@@ -298,6 +305,12 @@ public class MainActivity extends AppCompatActivity
         itemTextView.setOnTouchListener(listener);
 
         return tr;
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
     }
 
     private void updateCurrentList() {

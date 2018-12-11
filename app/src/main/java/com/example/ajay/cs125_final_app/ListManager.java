@@ -13,7 +13,7 @@ import android.app.Activity;
 import android.content.Context;
 
 public class ListManager {
-    private static final String SHARED_PREFERENCES_KEY = "lists";
+    public static final String SHARED_PREFERENCES_KEY = "lists";
 
     private static List<ItemList> lists = new ArrayList<>();
 

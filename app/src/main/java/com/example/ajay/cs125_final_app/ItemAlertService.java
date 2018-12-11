@@ -1,36 +1,112 @@
 package com.example.ajay.cs125_final_app;
 
-import android.app.IntentService;
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.widget.Toast;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import com.example.lib.Item;
+import com.example.lib.ItemList;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
+
 
 public class ItemAlertService extends Service {
     private final String CHANNELNAME = "QuicklistAlertService";
     private final String CHANNELDESC = "QuicklistAlertService";
 
+    private List<ItemList> lists;
+    private FusedLocationProviderClient client;
+
     public ItemAlertService() {
+    }
+
+    private void loadLists() {
+        SharedPreferences prefs = this.getSharedPreferences(this.getPackageName(),
+                this.getApplicationContext().MODE_PRIVATE);
+        String json = prefs.getString(ListManager.SHARED_PREFERENCES_KEY, new Gson().toJson(new ArrayList()));
+        Gson gson = new Gson();
+        JsonParser parser = new JsonParser();
+        JsonArray array = parser.parse(json).getAsJsonArray();
+
+        lists = new ArrayList<>();
+
+        for (int i = 0; i < array.size(); i++)
+            lists.add(gson.fromJson(array.get(i), ItemList.class));
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
+
+        client = LocationServices.getFusedLocationProviderClient(this);
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        client.requestLocationUpdates(new LocationRequest(), new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+
+                loadLists();
+                Location loc = locationResult.getLastLocation();
+                for (ItemList list : lists) {
+                    for (Item item : list.getItems()) {
+                        if (!item.hasLocation()) continue;
+                        float[] results = new float[1];
+                        Location.distanceBetween(loc.getLatitude(), loc.getLongitude(),
+                                item.getLatitude(), item.getLongitude(), results);
+                        float dist = results[0];
+                        if (dist < 20) {
+                            Intent notificationIntent = new Intent(ItemAlertService.this, MainActivity.class);
+
+                            PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
+                                    notificationIntent, 0);
+
+                            Notification notification = new NotificationCompat.Builder(ItemAlertService.this, CHANNELNAME)
+                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setContentTitle("Quicklist")
+                                    .setContentText(String.format("Location alert: %s", item.getName()))
+                                    .setContentIntent(pendingIntent)
+                                    .build();
+                            NotificationManagerCompat.from(ItemAlertService.this).notify(1337, notification);
+                        }
+                    }
+                }
+            }
+        }, null);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        Toast.makeText(this, "henlo", Toast.LENGTH_SHORT).show();
-
         return null;
     }
 

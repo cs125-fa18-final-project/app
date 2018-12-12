@@ -284,11 +284,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     public int colorizeItem(Item item) {
-        final int completedColor = Color.argb(255, 220, 220, 220);
+        final int completedColor = Color.argb(150, 220, 220, 220);
         double ming = 80;
         double maxg = 240;
         double g;
         double incompleteSize = 0;
+
+        //depending on time of day, change color scheme.
         for (Item i : currentList.getItems())
             if (! i.isCompleted()) incompleteSize++;
 

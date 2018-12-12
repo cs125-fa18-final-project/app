@@ -129,16 +129,6 @@ public class ItemActivity extends AppCompatActivity {
                 item.setLatitude(latitude);
                 item.setLongitude(longitude);
 
-                final float[] tempFloatArray = new float[20];
-
-                mFusedLocationClient.getLastLocation()
-                        .addOnSuccessListener(delegate, new OnSuccessListener<Location>() {
-                            public void onSuccess(Location value) {
-                                if (value != null) {
-                                    Location.distanceBetween(latitude, longitude, value.getLatitude(), value.getLongitude(), tempFloatArray);
-                                }
-                            }});
-                Toast.makeText(delegate, "Approximate Distance to Location: " + Float.toString(tempFloatArray[1]), Toast.LENGTH_LONG).show();
 
 
             }
@@ -189,6 +179,18 @@ public class ItemActivity extends AppCompatActivity {
 
                         latitude = latlng.latitude;
                         longitude = latlng.longitude;
+
+                        final float[] tempFloatArray = new float[20];
+
+                        mFusedLocationClient.getLastLocation()
+                                .addOnSuccessListener(delegate, new OnSuccessListener<Location>() {
+                                    public void onSuccess(Location value) {
+                                        if (value != null) {
+                                            Location.distanceBetween(item.getLatitude(), item.getLatitude(), value.getLatitude(), value.getLongitude(), tempFloatArray);
+                                            Toast.makeText(delegate, "Approximate Distance to Location: " + (Double.toString(tempFloatArray[0]/1000)), Toast.LENGTH_LONG).show();
+
+                                        }
+                                    }});
 
 
 

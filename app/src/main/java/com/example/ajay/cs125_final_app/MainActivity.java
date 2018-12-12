@@ -2,11 +2,14 @@ package com.example.ajay.cs125_final_app;
 
 import com.example.lib.ItemList;
 import com.example.lib.Item;
+import java.util.concurrent.TimeUnit;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import java.util.Calendar;
 
+import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
@@ -294,6 +297,18 @@ public class MainActivity extends AppCompatActivity
 
         final int notCompletedColor = Color.argb(255, 255, (int)g, 50);
 
+        //if the date of the item is nearby, then change the color to bright red
+        long itemTime = TimeUnit.MILLISECONDS.toDays(item.getDate().getTime());
+        long currentTime = TimeUnit.MILLISECONDS.toDays(Calendar.getInstance().getTime().getTime());
+        if (Math.abs((currentTime - itemTime)) < 1 && !item.isCompleted()) {
+
+            int nearbyColor = Color.argb(255,255,255,255);
+
+            return nearbyColor;
+
+        }
+
+
         return item.isCompleted() ? completedColor : notCompletedColor;
     }
 
@@ -310,7 +325,23 @@ public class MainActivity extends AppCompatActivity
         itemTextView.setClickable(true);
         itemTextView.setGravity(Gravity.LEFT);
         itemTextView.setId(item.getID());
-        itemTextView.setText(item.getName());
+
+        if (colorizeItem(item) == Color.argb(255,255,255,255)) {
+            itemTextView.setText("24 hrs to complete: " + item.getName());
+            ObjectAnimator animate = ObjectAnimator.ofFloat(itemTextView,"translationX", 50f);
+            animate.setDuration(500);
+            animate.start();
+
+            ObjectAnimator animateTwo = ObjectAnimator.ofFloat(itemTextView,"translationX", -50f);
+            animate.setDuration(500);
+            animate.start();
+
+        } else {
+            itemTextView.setText(item.getName());
+        }
+
+
+
         itemTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
         itemTextView.setLayoutParams(tvlp);
 

@@ -1,6 +1,7 @@
 package com.example.lib;
 
 import java.util.Date;
+import java.util.Calendar;
 
 public class Item implements Comparable<Item> {
     private int id;
@@ -10,6 +11,7 @@ public class Item implements Comparable<Item> {
     private double latitude;
     private double longitude;
     private boolean hasLocation;
+    private int daysTillToday;
 
     public Item(String setName) {
         name = setName;
@@ -28,6 +30,8 @@ public class Item implements Comparable<Item> {
 
         return date.compareTo(item.date);
     }
+
+
 
     public boolean hasLocation() {
         return hasLocation;

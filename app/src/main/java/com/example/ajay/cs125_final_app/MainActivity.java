@@ -287,17 +287,19 @@ public class MainActivity extends AppCompatActivity
         final int completedColor = Color.argb(150, 220, 220, 220);
         double ming = 80;
         double maxg = 240;
-        double g;
+        double maxBlueNight = 255;
         double incompleteSize = 0;
 
-        //depending on time of day, change color scheme.
+
         for (Item i : currentList.getItems())
             if (! i.isCompleted()) incompleteSize++;
 
         double proximityQuotient = (double) (currentList.getItems().indexOf(item)) / incompleteSize;
-        g = ming + ((maxg - ming) * proximityQuotient);
+        double g = ming + ((maxg - ming) * proximityQuotient);
+        double nightG = maxBlueNight + ((maxBlueNight) * proximityQuotient);
 
-        final int notCompletedColor = Color.argb(255, 255, (int)g, 50);
+        final int notCompletedColor = Color.argb(255, 255, (int) g, 50);
+
 
         //if the date of the item is nearby, then change the color to bright red
         long itemTime = TimeUnit.MILLISECONDS.toDays(item.getDate().getTime());
@@ -310,6 +312,11 @@ public class MainActivity extends AppCompatActivity
 
         }
 
+        //depending on time of day, change color scheme.
+        if (Calendar.getInstance().get(Calendar.HOUR_OF_DAY) >= 12) {
+            int nightColor = Color.argb(255, 0, 50, (int) nightG);
+            return nightColor;
+        }
 
         return item.isCompleted() ? completedColor : notCompletedColor;
     }

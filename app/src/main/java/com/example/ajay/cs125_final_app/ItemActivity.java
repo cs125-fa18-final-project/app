@@ -187,10 +187,26 @@ public class ItemActivity extends AppCompatActivity {
                                     public void onSuccess(Location value) {
                                         if (value != null) {
                                             Location.distanceBetween(item.getLatitude(), item.getLatitude(), value.getLatitude(), value.getLongitude(), tempFloatArray);
-                                            Toast.makeText(delegate, "Approximate distance to event location: " + (Double.toString(Math.round(tempFloatArray[0]/1000))) + " kilometers", Toast.LENGTH_LONG).show();
+                                            float speed = Math.round(value.getSpeed()/1000);
+                                            float accuracy = value.getSpeedAccuracyMetersPerSecond();
 
+                                            //Finds the min and max error to within 2 standard deviations below and above the given value.
+                                            float minSpeed = speed - (accuracy * 2);
+                                            float maxSpeed =speed + (accuracy * 2);
+                                            double metersDistance = tempFloatArray[0]/1000;
+                                            double lowerTime = metersDistance/(double) maxSpeed * (1/3600);
+                                            double upperTime = metersDistance/(double) minSpeed * (1/3600);
+
+                                            if (speed >= 1) {
+
+                                                Toast.makeText(delegate, "Approximate time to event location between: " + (lowerTime) + " and " + (upperTime) + " seconds", Toast.LENGTH_LONG).show();
+                                            } else {
+                                                Toast.makeText(delegate, "Approximate distance to event location: " + metersDistance + " kilometers", Toast.LENGTH_LONG).show();
+
+                                            }
                                         }
                                     }});
+
 
 
 

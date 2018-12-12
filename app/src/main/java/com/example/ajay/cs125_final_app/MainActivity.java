@@ -337,7 +337,7 @@ public class MainActivity extends AppCompatActivity
         itemTextView.setId(item.getID());
 
         if (colorizeItem(item) == Color.argb(255,255,255,255)) {
-            itemTextView.setText("<24 hours to complete: " + item.getName());
+            itemTextView.setText("< 24 hours to complete: " + item.getName());
             ObjectAnimator animate = ObjectAnimator.ofFloat(itemTextView,"translationX", 50f);
             animate.setDuration(500);
             animate.start();

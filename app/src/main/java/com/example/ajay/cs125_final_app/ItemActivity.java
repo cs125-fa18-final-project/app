@@ -187,7 +187,7 @@ public class ItemActivity extends AppCompatActivity {
                                     public void onSuccess(Location value) {
                                         if (value != null) {
                                             Location.distanceBetween(item.getLatitude(), item.getLatitude(), value.getLatitude(), value.getLongitude(), tempFloatArray);
-                                            Toast.makeText(delegate, "Approximate Distance to Location: " + (Double.toString(tempFloatArray[0]/1000)), Toast.LENGTH_LONG).show();
+                                            Toast.makeText(delegate, "Approximate distance to event location: " + (Double.toString(Math.round(tempFloatArray[0]/1000))) + " kilometers", Toast.LENGTH_LONG).show();
 
                                         }
                                     }});

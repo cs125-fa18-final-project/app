@@ -332,9 +332,7 @@ public class MainActivity extends AppCompatActivity
             animate.setDuration(500);
             animate.start();
 
-            ObjectAnimator animateTwo = ObjectAnimator.ofFloat(itemTextView,"translationX", -50f);
-            animate.setDuration(500);
-            animate.start();
+
 
         } else {
             itemTextView.setText(item.getName());

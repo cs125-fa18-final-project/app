@@ -66,6 +66,7 @@ public class ItemActivity extends AppCompatActivity {
     private boolean locationSet = false;
     private double latitude;
     private double longitude;
+    private FusedLocationProviderClient mFusedLocationClient;
 
     private final int CAL_WRITE_RESULT = 0;
     private Handler calWriteHandler = new Handler() {
@@ -80,6 +81,7 @@ public class ItemActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_item);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         final ItemActivity delegate = this;
 
@@ -127,7 +129,18 @@ public class ItemActivity extends AppCompatActivity {
                 item.setLatitude(latitude);
                 item.setLongitude(longitude);
 
-                Toast.makeText(delegate, "Location set", Toast.LENGTH_SHORT).show();
+                final float[] tempFloatArray = new float[20];
+
+                mFusedLocationClient.getLastLocation()
+                        .addOnSuccessListener(delegate, new OnSuccessListener<Location>() {
+                            public void onSuccess(Location value) {
+                                if (value != null) {
+                                    Location.distanceBetween(latitude, longitude, value.getLatitude(), value.getLongitude(), tempFloatArray);
+                                }
+                            }});
+                Toast.makeText(delegate, "Approximate Distance to Location: " + Float.toString(tempFloatArray[1]), Toast.LENGTH_LONG).show();
+
+
             }
         });
 
@@ -155,6 +168,8 @@ public class ItemActivity extends AppCompatActivity {
                     }
                 });
 
+                //If If permission isn't granted for location, ask for it.
+
                 if (ContextCompat.checkSelfPermission(ItemActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(ItemActivity.this,
@@ -163,6 +178,7 @@ public class ItemActivity extends AppCompatActivity {
                 } else {
                     googleMap.setMyLocationEnabled(true);
 
+                    //If item already has a location just set that to the latlng object
                     if (item.hasLocation()) {
                         LatLng latlng = new LatLng(item.getLatitude(), item.getLongitude());
                         MarkerOptions marker = new MarkerOptions().position(latlng).title(item.getName());
@@ -173,6 +189,11 @@ public class ItemActivity extends AppCompatActivity {
 
                         latitude = latlng.latitude;
                         longitude = latlng.longitude;
+
+
+
+
+
                     } else {
                         FusedLocationProviderClient client = LocationServices
                                 .getFusedLocationProviderClient(delegate);
@@ -188,6 +209,8 @@ public class ItemActivity extends AppCompatActivity {
 
                                 latitude = latlng.latitude;
                                 longitude = latlng.longitude;
+
+
                             }
                         });
                     }
